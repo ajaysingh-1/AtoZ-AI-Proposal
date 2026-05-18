@@ -1,0 +1,201 @@
+
+<h2 class="sr-only">Comparison of proposal generation tools for AtoZ Management Consulting — ratings, pricing, and features across 14 tools</h2>
+
+<style>
+  .wrap { padding: 1rem 0; font-size: 14px; color: var(--color-text-primary); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .fbtn { padding: 5px 14px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-secondary); cursor: pointer; font-size: 13px; }
+  .fbtn.active { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-border-info); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.15s; }
+  .card.top { border: 2px solid var(--color-border-info); }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card-name { font-size: 15px; font-weight: 500; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: var(--border-radius-md); white-space: nowrap; }
+  .badge-gov { background: #B5D4F4; color: #0C447C; }
+  .badge-sales { background: #C0DD97; color: #27500A; }
+  .badge-ai { background: #CECBF6; color: #3C3489; }
+  .badge-sig { background: #D3D1C7; color: #444441; }
+  .badge-top { background: var(--color-background-info); color: var(--color-text-info); }
+  .rating-row { display: flex; align-items: center; gap: 8px; }
+  .bar-bg { flex: 1; height: 6px; background: var(--color-background-tertiary); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; }
+  .score-label { font-size: 13px; font-weight: 500; min-width: 30px; text-align: right; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--color-text-secondary); }
+  .chip { display: flex; align-items: center; gap: 4px; }
+  .pricing { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .note { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 1rem; font-size: 12px; color: var(--color-text-secondary); }
+  .leg { display: flex; align-items: center; gap: 5px; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .chart-wrap { margin-bottom: 1.5rem; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .bar-label { font-size: 12px; color: var(--color-text-secondary); width: 140px; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .h-bar-bg { flex: 1; height: 18px; background: var(--color-background-tertiary); border-radius: 4px; overflow: hidden; }
+  .h-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; font-size: 11px; font-weight: 500; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .tab { padding: 6px 16px; font-size: 13px; cursor: pointer; border: none; background: transparent; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+  .view { display: none; }
+  .view.active { display: block; }
+</style>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('cards')">Cards</button>
+    <button class="tab" onclick="switchTab('chart')">Rating chart</button>
+    <button class="tab" onclick="switchTab('price')">Price chart</button>
+  </div>
+
+  <div id="view-cards" class="view active">
+    <div class="filters" id="filters">
+      <button class="fbtn active" data-cat="all" onclick="filter(this)">All tools</button>
+      <button class="fbtn" data-cat="gov" onclick="filter(this)">Government / RFP</button>
+      <button class="fbtn" data-cat="ai" onclick="filter(this)">AI-first</button>
+      <button class="fbtn" data-cat="sales" onclick="filter(this)">Sales proposals</button>
+      <button class="fbtn" data-cat="sig" onclick="filter(this)">Signature only</button>
+    </div>
+    <div class="grid" id="card-grid"></div>
+  </div>
+
+  <div id="view-chart" class="view">
+    <p class="section-title">AtoZ compatibility rating (out of 10)</p>
+    <div id="rating-chart"></div>
+  </div>
+
+  <div id="view-price" class="view">
+    <p class="section-title">Starting price (monthly, USD) — custom/enterprise shown as $0</p>
+    <div id="price-chart"></div>
+  </div>
+</div>
+
+<script>
+const tools = [
+  { name:'AutogenAI', cat:'gov', rating:9, price:0, priceLabel:'Custom enterprise', tag:'ai', top:true,
+    note:'Best AI narrative writing for federal RFPs. Reads solicitation, auto-generates compliant draft. FedRAMP High.',
+    features:['AI draft from prompt','Compliance check','Federal FAR knowledge','Full lifecycle'] },
+  { name:'GovDash', cat:'gov', rating:8, price:0, priceLabel:'Custom enterprise', tag:'gov', top:true,
+    note:'Built exclusively for GovCon. Opportunity discovery + proposal drafting + contract mgmt in one.',
+    features:['FAR-trained AI','Opportunity discovery','Capture management','Compliance matrix'] },
+  { name:'Procurement Sciences', cat:'gov', rating:8, price:0, priceLabel:'Custom (flexible)', tag:'gov', top:true,
+    note:'GovCon veterans behind it. $2B in assisted awards. Dedicated CSM, 2hr support response.',
+    features:['Bid/no-bid AI','Color team review','Single-tenant security','AI proposal agents'] },
+  { name:'AutoRFP.ai', cat:'ai', rating:7, price:500, priceLabel:'$500–800/mo (small)', tag:'ai',
+    note:'Good RFP auto-fill from knowledge base (~60%). Needs 4–8 weeks setup. Entry-level pricing.',
+    features:['RFP auto-fill','Multi-format import','Knowledge base','Q&A library'] },
+  { name:'SiftHub', cat:'ai', rating:7, price:0, priceLabel:'Contact sales', tag:'ai',
+    note:'80–90% auto-fill from live sources (Salesforce, Slack, Gong). No manual library maintenance.',
+    features:['Live CRM sync','No library upkeep','Cover letter gen','80–90% auto-fill'] },
+  { name:'Expedience', cat:'gov', rating:6, price:0, priceLabel:'Custom (MS Word add-in)', tag:'gov',
+    note:'Works inside Word. Zero learning curve. MS Copilot AI. Good for teams already in Office 365.',
+    features:['Lives inside Word','MS Copilot AI','Excel pricing integration','No new software'] },
+  { name:'Lindy', cat:'ai', rating:6, price:0, priceLabel:'Usage-based', tag:'ai',
+    note:'AI agents generate & send proposals. 2500+ integrations. Flexible but not GovCon-specific.',
+    features:['AI agent automation','CRM integrations','Pipeline automation','Custom workflows'] },
+  { name:'PandaDoc', cat:'sales', rating:5, price:35, priceLabel:'From $35/user/mo', tag:'sales',
+    note:'Solid commercial proposal tool with AI drafting. No federal compliance. Good for non-gov work.',
+    features:['AI content generation','Template library','E-signatures','CRM integration'] },
+  { name:'Proposify', cat:'sales', rating:5, price:19, priceLabel:'From $19/user/mo', tag:'sales',
+    note:'Affordable, branded commercial proposals. Not built for RFPs. Basic AI assistance only.',
+    features:['Branded templates','Approval workflows','Analytics','E-signatures'] },
+  { name:'GovWin', cat:'gov', rating:4, price:0, priceLabel:'Custom enterprise', tag:'gov',
+    note:'Excellent for finding federal opportunities. Does NOT generate proposal documents.',
+    features:['Opportunity discovery','Market intelligence','Pipeline tracking','Bid/no-bid support'] },
+  { name:'Qwilr', cat:'sales', rating:2, price:35, priceLabel:'From $35/user/mo', tag:'sales',
+    note:'Web-link proposals — wrong format for federal submissions. Government portals need Word/PDF.',
+    features:['Interactive web proposals','Engagement analytics','E-signatures','Pricing calculator'] },
+  { name:'GetAccept', cat:'sales', rating:2, price:25, priceLabel:'From $25/user/mo', tag:'sales',
+    note:'Video + chat sales proposals. Irrelevant for federal procurement. No compliance features.',
+    features:['Video proposals','Digital sales rooms','Chat with buyers','E-signatures'] },
+  { name:'DocuSign', cat:'sig', rating:1, price:10, priceLabel:'From $10/mo', tag:'sig',
+    note:'E-signature only. Not a proposal generator. Use it only for the signing step.',
+    features:['E-signatures','Audit trails','Document templates','Compliance tracking'] },
+  { name:'HoneyBook', cat:'sig', rating:1, price:39, priceLabel:'$39/mo (all features)', tag:'sig',
+    note:'Built for freelancers and creatives. No federal proposal capability at all.',
+    features:['Client management','Basic proposals','Invoicing','Scheduling'] },
+];
+
+function ratingColor(r) {
+  if (r >= 8) return '#1D9E75';
+  if (r >= 6) return '#378ADD';
+  if (r >= 4) return '#BA7517';
+  return '#E24B4A';
+}
+
+function renderCards(data) {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = data.map(t => `
+    <div class="card ${t.top?'top':''}" data-cat="${t.cat}">
+      <div class="card-head">
+        <span class="card-name">${t.name}</span>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+          ${t.top?'<span class="badge badge-top">Top pick</span>':''}
+          <span class="badge badge-${t.tag}">${t.cat==='gov'?'Gov / RFP':t.cat==='ai'?'AI-first':t.cat==='sales'?'Sales':'Signature'}</span>
+        </div>
+      </div>
+      <div class="rating-row">
+        <div class="bar-bg"><div class="bar-fill" style="width:${t.rating*10}%;background:${ratingColor(t.rating)}"></div></div>
+        <span class="score-label" style="color:${ratingColor(t.rating)}">${t.rating}/10</span>
+      </div>
+      <div class="pricing"><i class="ti ti-tag" aria-hidden="true" style="font-size:13px;margin-right:4px"></i>${t.priceLabel}</div>
+      <div class="note">${t.note}</div>
+      <div class="meta">${t.features.map(f=>`<span class="chip"><i class="ti ti-check" aria-hidden="true" style="font-size:12px;color:var(--color-text-success)"></i>${f}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+function filter(btn) {
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const cat = btn.dataset.cat;
+  const filtered = cat==='all' ? tools : tools.filter(t=>t.cat===cat);
+  renderCards(filtered);
+}
+
+function renderRatingChart() {
+  const sorted = [...tools].sort((a,b)=>b.rating-a.rating);
+  document.getElementById('rating-chart').innerHTML = sorted.map(t=>`
+    <div class="bar-row">
+      <div class="bar-label">${t.name}</div>
+      <div class="h-bar-bg">
+        <div class="h-bar-fill" style="width:${t.rating*10}%;background:${ratingColor(t.rating)};color:${t.rating>=6?'#fff':'var(--color-text-primary)'}">
+          ${t.rating>0?t.rating:''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPriceChart() {
+  const withPrice = tools.filter(t=>t.price>0).sort((a,b)=>a.price-b.price);
+  const maxP = Math.max(...withPrice.map(t=>t.price));
+  const custom = tools.filter(t=>t.price===0);
+  document.getElementById('price-chart').innerHTML =
+    withPrice.map(t=>`
+      <div class="bar-row">
+        <div class="bar-label">${t.name}</div>
+        <div class="h-bar-bg">
+          <div class="h-bar-fill" style="width:${(t.price/maxP*100).toFixed(0)}%;background:#378ADD;color:#fff">
+            $${t.price}
+          </div>
+        </div>
+      </div>
+    `).join('') +
+    `<div style="margin-top:1rem;font-size:12px;color:var(--color-text-secondary)">
+      <i class="ti ti-info-circle" aria-hidden="true" style="font-size:13px;margin-right:4px"></i>
+      Custom/enterprise pricing (contact sales): ${custom.map(t=>t.name).join(', ')}
+    </div>`;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`view-${tab}`).classList.add('active');
+  if(tab==='chart') renderRatingChart();
+  if(tab==='price') renderPriceChart();
+}
+
+renderCards(tools);
+</script>
